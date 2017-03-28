@@ -1,0 +1,5 @@
+run_mongo.py
+*.jpg
+.idea
+*.pyc
+.DS_Store

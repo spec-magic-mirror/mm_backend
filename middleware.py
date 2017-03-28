@@ -24,7 +24,7 @@ def upload_image():
     filename = file.filename
     file.save(filename)
 
-    md = MoleDetector(filename)
+    md = MoleDetector(base64.b64decode(filename))
     moles_file = md.map_moles()
 
     mole_b64 = base64.b64encode(moles_file)
