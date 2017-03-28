@@ -45,9 +45,9 @@ class MoleDetector:
                 cv2.circle(circle_canvas, circle_center, circle_radius, (255,255,255),2)
             #circle_canvas = cv2.cvtColor(circle_canvas, cv2.COLOR_BGR2GRAY)
             #contours, hierarchy = cv2.findContours(circle_canvas, 1, 2)
-            cv2.imshow("Circles", circle_canvas)
-            cv2.imshow("Canny", mole_cannys[i])
-            cv2.waitKey(0)
+            #cv2.imshow("Circles", circle_canvas)
+            #cv2.imshow("Canny", mole_cannys[i])
+            #cv2.waitKey(0)
 
         #canny_edges = cv2.Canny(image, 150, 300, apertureSize=3)
         #cv2.namedWindow("Canny", cv2.WINDOW_NORMAL)
