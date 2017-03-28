@@ -31,11 +31,78 @@ class MoleDetector:
         #cv2.imshow("Blob", im_with_moles)
         #cv2.waitKey(0)
 
-        #canny_edges = cv2.Canny(self.cv2_small, 150, 300, apertureSize=3)
+        mole_crops = self.getMoleCrops(keypoints)
+        mole_imgs = self.getMoleImages(image, mole_crops)
+        mole_cannys = self.getMoleCannys(image, mole_crops)
+        mole_circles = self.getMoleCircles(image, mole_crops)
+
+        for i in range(3):
+            cv2.imshow("Mole", mole_imgs[i])
+            circle_canvas = np.zeros((50,50,3), dtype=np.uint8)
+            for c in mole_circles[i]:
+                circle_center = (c[0], c[1])
+                circle_radius = int(c[2])
+                cv2.circle(circle_canvas, circle_center, circle_radius, (255,255,255),2)
+            #circle_canvas = cv2.cvtColor(circle_canvas, cv2.COLOR_BGR2GRAY)
+            #contours, hierarchy = cv2.findContours(circle_canvas, 1, 2)
+            cv2.imshow("Circles", circle_canvas)
+            cv2.imshow("Canny", mole_cannys[i])
+            cv2.waitKey(0)
+
+        #canny_edges = cv2.Canny(image, 150, 300, apertureSize=3)
+        #cv2.namedWindow("Canny", cv2.WINDOW_NORMAL)
+        #cv2.imshow("Canny", cv2.resize(canny_edges, (0,0), fx=0.3, fy=0.3))
         #cv2.imshow("Canny", canny_edges)
         #cv2.waitKey(0)
 
         return cv2.imencode('.jpg', im_with_moles)[1].tostring()
+
+    def getMoleCrops(self, mole_keypoints):
+        mole_crops = []
+        for keypoint in mole_keypoints:
+            x,y = keypoint.pt
+
+            # For now just used fixed size of 50 pixels
+            #crop_size = keypoint.size*3
+            crop_size = 50
+
+            # TODO: cant assume that we won't go past the bounds of the image
+            crop_pts = [y-crop_size/2, y+crop_size/2, x-crop_size/2, x+crop_size/2]
+            crop_pts = [int(c) for c in crop_pts]
+            mole_crops.append(crop_pts)
+        return mole_crops
+
+    def getMoleCannys(self, original_img, mole_crops):
+        mole_cannys = []
+        for mc in mole_crops:
+            mole_img = original_img[mc[0]:mc[1], mc[2]: mc[3]]
+            canny_edges = cv2.Canny(mole_img, 70, 150, apertureSize=3)
+            mole_cannys.append(canny_edges)
+        return mole_cannys
+
+    def getMoleCircles(self, original_img, mole_crops):
+        mole_circles = []
+        mole_cannys = self.getMoleCannys(original_img, mole_crops)
+        i = 0
+        for canny in mole_cannys:
+            mole_circles.append([])
+            biggest_circle = [-1, -1, -1]
+            contours, hierarchy = cv2.findContours(canny, 1, 2)
+            for cnt in contours:
+                (x,y), radius = cv2.minEnclosingCircle(cnt)
+                if radius > biggest_circle[2]:
+                    biggest_circle = [int(x),int(y),radius]
+                mole_circles[i].append([int(x),int(y),radius])
+            i += 1
+            #mole_circles.append(biggest_circle)
+        return mole_circles
+
+    def getMoleImages(self, original_img, mole_crops):
+        mole_imgs = []
+        for mc in mole_crops:
+            mole_img = original_img[mc[0]:mc[1], mc[2]: mc[3]]
+            mole_imgs.append(mole_img)
+        return mole_imgs
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
