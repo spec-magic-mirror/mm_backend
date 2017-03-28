@@ -3,6 +3,8 @@ import cv2
 import sys
 
 class MoleDetector:
+    version = "0.0.1"
+
     def __init__(self, fname):
         self.fname = fname
         self.moles = []
