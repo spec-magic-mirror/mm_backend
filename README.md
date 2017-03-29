@@ -5,6 +5,7 @@ by Magic Mirror.
 Instructions for use:
 1. Launch MongoDB
 2. Launch the middleware
+
 	`python middleware.py <port>`
 
 Now the middleware REST service is running and connected to the database.
@@ -26,4 +27,4 @@ Output:
 	The labels of each image will match the label of the original image provided
 	e.g. 
 	
-	`{"front":<b64 encoded image data>, "back":<b64 encoded image data>}`
+	{"front":<b64 encoded image data>, "back":<b64 encoded image data>}
