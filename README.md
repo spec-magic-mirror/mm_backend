@@ -10,11 +10,14 @@ Instructions for use:
 Now the middleware REST service is running and connected to the database.
 
 API:
+
 `<url>/detect_moles`
+
 Input:
 	Photos to perform mole detection on (as dictionary of files)
 	All files must be base64 encoded	
 	e.g. 
+	
 	`files={"front":<b64 encoded image data>, "back":<b64 encoded image data>}`
 	
 Output:
@@ -22,4 +25,5 @@ Output:
 	All files will be base64 encoded
 	The labels of each image will match the label of the original image provided
 	e.g. 
+	
 	`{"front":<b64 encoded image data>, "back":<b64 encoded image data>}`
