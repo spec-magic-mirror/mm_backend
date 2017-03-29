@@ -18,7 +18,7 @@ Input:
 	All files must be base64 encoded	
 	e.g. 
 	
-	`files={"front":<b64 encoded image data>, "back":<b64 encoded image data>}`
+	files={"front":<b64 encoded image data>, "back":<b64 encoded image data>}
 	
 Output:
 	Photos with moles overlayed on them (as dictionary of files)
