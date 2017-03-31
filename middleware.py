@@ -31,7 +31,9 @@ def upload_image():
     all_images = request.files
     for type, image_storage in all_images.iteritems():
         filename = image_storage.filename
+        #filename = type
         image = image_storage.read()
+        print filename
         with open(filename, 'w') as image_file:
             image_file.write(base64.b64decode(image))
 

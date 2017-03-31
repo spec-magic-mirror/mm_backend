@@ -37,7 +37,8 @@ class MoleDetector:
         mole_imgs = self.getMoleImages(image, mole_crops)
         mole_cannys = self.getMoleCannys(image, mole_crops)
         mole_circles = self.getMoleCircles(image, mole_crops)
-
+        # FOR ALGORITHM DEVELOPMENT ONLY
+        '''
         for i in range(3):
             cv2.imshow("Mole", mole_imgs[i])
             circle_canvas = np.zeros((50,50,3), dtype=np.uint8)
@@ -50,7 +51,7 @@ class MoleDetector:
             #cv2.imshow("Circles", circle_canvas)
             #cv2.imshow("Canny", mole_cannys[i])
             #cv2.waitKey(0)
-
+        '''
         #canny_edges = cv2.Canny(image, 150, 300, apertureSize=3)
         #cv2.namedWindow("Canny", cv2.WINDOW_NORMAL)
         #cv2.imshow("Canny", cv2.resize(canny_edges, (0,0), fx=0.3, fy=0.3))
