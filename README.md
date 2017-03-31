@@ -10,7 +10,7 @@ Instructions for use:
 
 Now the middleware REST service is running and connected to the database.
 
-API:
+API Methods:
 
 `<url>/get_test`
 
@@ -41,3 +41,7 @@ Output:
 	e.g. 
 	
 	{"front":<b64 encoded image data>, "back":<b64 encoded image data>}
+	
+	Errors will be returned in the form of {"error": <error message string>} so
+	it is advisable to check this field after getting a response since there
+	is no guarantee that this method will return usable data.
