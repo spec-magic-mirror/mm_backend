@@ -24,9 +24,17 @@ def get_test():
 
 @middleware.route("/detect_moles", methods=["POST"])
 def upload_image():
+    error = {"error": ""}
     print "Got a request to detect moles"
     #TODO: add support for multiple users
-    user_id = db.Users.find_one({"firstName": "Mani"})['_id']
+    user_firstname = "Mani"
+    try:
+        user_id = db.Users.find_one({"firstName": user_firstname})['_id']
+    except:
+        error["error"] = "Couldn't find user '" + user_firstname + "'"
+        print error["error"]
+        return json.dumps(error)
+
     timestamp = datetime.datetime.now()
     version = MoleDetector.version
 
@@ -34,6 +42,12 @@ def upload_image():
     all_moles = {"date": timestamp, "images_id": "", "moles": []}
 
     all_images = request.files
+
+    if len(all_images) == 0:
+        error["error"] = "Didn't receive any images"
+        print error["error"]
+        return json.dumps(error)
+
     for type, image_storage in all_images.iteritems():
         filename = image_storage.filename
         #filename = type
