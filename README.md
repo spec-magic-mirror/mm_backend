@@ -12,7 +12,20 @@ Now the middleware REST service is running and connected to the database.
 
 API:
 
+`<url>/get_test`
+
+This method only exsists to test a connection to the REST service.
+
+Input:
+	None
+
+Output:
+	A string to indicate a succesful connection to the service.
+
+
 `<url>/detect_moles`
+
+This method takes an image and returns the same image with all detected moles indicated.
 
 Input:
 	Photos to perform mole detection on (as dictionary of files)
