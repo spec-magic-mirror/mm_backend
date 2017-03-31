@@ -84,6 +84,7 @@ def upload_image():
     for key in result.keys():
         result[key] = result[key]['moles']
 
+    result["error"] = error["error"]
     response = json.dumps(result)
     return response
 
