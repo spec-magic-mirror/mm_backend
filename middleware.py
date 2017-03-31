@@ -18,6 +18,10 @@ except Exception as e:
 def root():
     return 0
 
+@middleware.route("/get_test", methods=["GET"])
+def get_test():
+    return "Hello from the Mole Detector!\n"
+
 @middleware.route("/detect_moles", methods=["POST"])
 def upload_image():
     print "Got a request to detect moles"
@@ -27,6 +31,7 @@ def upload_image():
     version = MoleDetector.version
 
     images = {"userId": user_id, "date": timestamp, "version": version, "images": {}}
+    all_moles = {"date": timestamp, "images_id": "", "moles": []}
 
     all_images = request.files
     for type, image_storage in all_images.iteritems():
@@ -39,14 +44,28 @@ def upload_image():
 
         md = MoleDetector(filename)
         os.remove(filename)
-        moles_file = md.map_moles()
+        moles_file, moles_keypoints = md.map_moles()
         mole_b64 = base64.b64encode(moles_file)
 
         new_image = {"original": image, "moles": mole_b64}
         images['images'][type] = new_image
 
-    # Add images to database
-    db.Images.insert(images)
+        orientation_moles = {"orientation": type, "moleData": []}
+
+        for keypoint in moles_keypoints:
+            mole = {"location": {"x": 0, "y": 0}, "asymmetry": "", "size": 0, "shape": "", "color": [0, 0, 0],
+                    "misc": {}}
+            location = keypoint.pt
+            mole["location"]["x"] = location[0]
+            mole["location"]["y"] = location[1]
+            orientation_moles["moleData"].append(mole)
+
+        all_moles["moles"].append(orientation_moles)
+
+    # Add images and mole data to database
+    images_id = db.Images.insert(images)
+    all_moles["images_id"] = images_id
+    db.Users.update_one({"_id":user_id}, {"$push":{"moleHistory":all_moles}})
     result = images['images']
     for key in result.keys():
         result[key] = result[key]['moles']
@@ -56,6 +75,6 @@ def upload_image():
 
 if __name__ == "__main__":
     port = 5000
-    if len(sys.argv) < 2:
-        port = sys.argv[1]
+    if len(sys.argv) > 1:
+        port = int(sys.argv[1])
     middleware.run(host="0.0.0.0", port=port, debug=True)

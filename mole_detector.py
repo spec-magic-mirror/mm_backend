@@ -58,7 +58,7 @@ class MoleDetector:
         #cv2.imshow("Canny", canny_edges)
         #cv2.waitKey(0)
 
-        return cv2.imencode('.jpg', im_with_moles)[1].tostring()
+        return cv2.imencode('.jpg', im_with_moles)[1].tostring(), keypoints
 
     def getMoleCrops(self, mole_keypoints):
         mole_crops = []
