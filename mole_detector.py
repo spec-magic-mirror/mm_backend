@@ -15,6 +15,9 @@ class MoleDetector:
     # explore active contour and major/minor axes for sizing
     def map_moles(self):
         image = self.image_large
+
+	# There are the specific parameters for te pure CV blob detector approach
+	'''
         params = cv2.SimpleBlobDetector_Params()
         params.minThreshold = 120
         params.filterByArea = True
@@ -25,9 +28,18 @@ class MoleDetector:
         params.minConvexity = .80
         #params.filterByInertia = False
         #params.minInertiaRatio = 0.20
+	'''
 
-        #params = cv2.SimpleBlobDetector_Params()
-
+	params = cv2.SimpleBlobDetector_Params()
+	params.minThreshold = 50
+	params.maxThreshold = 10000
+	params.filterByArea = True
+	params.minArea = 25
+	params.maxArea = 1000
+	params.filterByConvexity = False
+	params.filterByCircularity = False
+	params.filterByInertia = False	
+	
         detector = cv2.SimpleBlobDetector(params)
         keypoints = detector.detect(image)
 
