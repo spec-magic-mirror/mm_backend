@@ -15,4 +15,7 @@ except Exception as e:
 
 with open("test_data.json", 'r') as test_file:
     test_json = json.load(test_file)
-    db.Users.update({"firstName":"Mani", "lastName":"Moles"}, test_json)
+    if db.Users.find({"firstName":"Mani", "lastName":"Moles"}).count() == 0:
+	db.Users.insert(test_json)
+    else:
+    	db.Users.update({"firstName":"Mani", "lastName":"Moles"}, test_json)
