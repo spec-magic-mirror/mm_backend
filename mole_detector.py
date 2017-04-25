@@ -31,11 +31,13 @@ class MoleDetector:
 	'''
 
 	params = cv2.SimpleBlobDetector_Params()
-	params.minThreshold = 50
+
+        params.minThreshold = 50
 	params.maxThreshold = 10000
 	params.filterByArea = True
-	params.minArea = 25
-	params.maxArea = 1000
+	#params.minArea = 25
+        params.minArea = 20
+	params.maxArea = 10000
 	params.filterByConvexity = False
 	params.filterByCircularity = False
 	params.filterByInertia = False	
