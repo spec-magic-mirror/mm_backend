@@ -30,15 +30,15 @@ class MoleDetector:
         #params.minInertiaRatio = 0.20
 	'''
 
-	params = cv2.SimpleBlobDetector_Params()
-	params.minThreshold = 50
-	params.maxThreshold = 10000
-	params.filterByArea = True
-	params.minArea = 25
-	params.maxArea = 1000
-	params.filterByConvexity = False
-	params.filterByCircularity = False
-	params.filterByInertia = False	
+        params = cv2.SimpleBlobDetector_Params()
+        params.minThreshold = 50
+        params.maxThreshold = 10000
+        params.filterByArea = True
+        params.minArea = 20
+        params.maxArea = 10000
+        params.filterByConvexity = False
+        params.filterByCircularity = False
+        params.filterByInertia = False
 	
         detector = cv2.SimpleBlobDetector(params)
         keypoints = detector.detect(image)
@@ -47,9 +47,9 @@ class MoleDetector:
 
         #cv2.imshow("Blob", im_with_moles)
         #cv2.waitKey(0)
-
-        mole_crops = self.getMoleCrops(image, keypoints)
-        mole_imgs = self.getMoleImages(image, mole_crops)
+        req_size = 50
+        mole_crops = self.getMoleCrops(image, keypoints, req_size)
+        mole_imgs = self.getMoleImages(image, mole_crops, req_size)
         trial_num = 0
         while os.path.exists("trials/" + str(trial_num)):
             trial_num += 1
@@ -93,14 +93,11 @@ class MoleDetector:
 
         return cv2.imencode('.jpg', im_with_moles)[1].tostring(), keypoints
 
-    def getMoleCrops(self, original_img, mole_keypoints):
+    def getMoleCrops(self, original_img, mole_keypoints, req_size):
         mole_crops = []
         for keypoint in mole_keypoints:
             x,y = keypoint.pt
-
-            # For now just used fixed size of 50 pixels
-            #crop_size = keypoint.size*3
-            crop_size = 150
+            crop_size = max([req_size, keypoint.size*3])
 
             # TODO: find better way of handling out of bounds instead of just skipping them
             y_min = y-crop_size/2
@@ -108,7 +105,7 @@ class MoleDetector:
             x_min = x-crop_size/2
             x_max = x+crop_size/2
             if y_min >= 0 and x_min >= 0 \
-                    and y_max < original_img.shape[0] and y_max < original_img.shape[1]:
+                    and y_max < original_img.shape[0] and x_max < original_img.shape[1]:
                 crop_pts = [y_min, y_max, x_min, x_max]
                 crop_pts = [int(c) for c in crop_pts]
                 mole_crops.append(crop_pts)
@@ -139,12 +136,14 @@ class MoleDetector:
             #mole_circles.append(biggest_circle)
         return mole_circles
 
-    def getMoleImages(self, original_img, mole_crops):
+    def getMoleImages(self, original_img, mole_crops, req_size):
         mole_imgs = []
         for mc in mole_crops:
             y = (mc[1]-mc[0])/2 + mc[0]
             x = (mc[3]-mc[2])/2 + mc[2]
             mole_img = original_img[mc[0]:mc[1], mc[2]: mc[3]]
+            if mole_img.shape[0] > req_size:
+                mole_img = cv2.resize(mole_img, (req_size, req_size))
             mole_imgs.append((mole_img, x, y))
         return mole_imgs
 
