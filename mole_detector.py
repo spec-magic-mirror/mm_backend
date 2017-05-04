@@ -29,7 +29,6 @@ class MoleDetector:
         #params.filterByInertia = False
         #params.minInertiaRatio = 0.20
 	'''
-
         params = cv2.SimpleBlobDetector_Params()
         params.minThreshold = 50
         params.maxThreshold = 10000
@@ -39,7 +38,7 @@ class MoleDetector:
         params.filterByConvexity = False
         params.filterByCircularity = False
         params.filterByInertia = False
-	
+
         detector = cv2.SimpleBlobDetector(params)
         keypoints = detector.detect(image)
 
