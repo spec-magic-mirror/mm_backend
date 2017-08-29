@@ -10,7 +10,7 @@ address = "http://localhost:5000"
 
 if len(sys.argv) > 3:
     #address = sys.argv[3]
-    address = "http://10.128.29.118:5000"
+    address = "http://10.128.15.48:5000"
 
 type = "front"
 
