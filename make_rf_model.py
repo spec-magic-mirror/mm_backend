@@ -1,14 +1,16 @@
+print("Importing...")
+
 import numpy as np
-from sklearn import linear_model
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.externals import joblib
-from matplotlib import pyplot as plt
 import cv2
 import sys, os
+
 DATA_COLLECTION_ROOT = "../data_collection/"
 POS_SAMPLES = DATA_COLLECTION_ROOT + "pos_moles/cropped/"
 NEG_SAMPLES = DATA_COLLECTION_ROOT + "neg_moles/cropped/"
 
+print("Collecting samples...")
 # Collect samples and sort them into positive and negative
 # Augment data by having 4 rotations for each
 pos_paths = []
@@ -61,6 +63,8 @@ all_y = np.array(all_y)
 
 train_x = all_x
 train_y = all_y
+
+print("Training Random Forest Classifier...")
 rf_clf = RandomForestClassifier(n_estimators=100, n_jobs=-1)
 rf_clf.fit(train_x, train_y)
 joblib.dump(rf_clf, 'rf_clf.pkl')
