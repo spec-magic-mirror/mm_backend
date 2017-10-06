@@ -43,8 +43,8 @@ num_samples *= 4
 x_size = (num_samples, sis_flat[0])
 y_size = (num_samples)
 
-all_x = np.zeros(x_size)
-all_y = np.zeros(y_size)
+all_x = np.zeros(x_size, dtype=np.uint8)
+all_y = np.zeros(y_size, dtype=np.uint8)
 
 sample_i = 0
 for img_path in pos_paths:
