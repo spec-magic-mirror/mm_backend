@@ -30,7 +30,8 @@ class MoleDetector:
         #params.minInertiaRatio = 0.20
 	'''
         params = cv2.SimpleBlobDetector_Params()
-        params.minThreshold = 50
+        #params.minThreshold = 50
+        params.minThreshold = 5
         params.maxThreshold = 10000
         params.filterByArea = True
         params.minArea = 20
@@ -46,7 +47,7 @@ class MoleDetector:
 
         #cv2.imshow("Blob", im_with_moles)
         #cv2.waitKey(0)
-        req_size = 50
+        req_size = 75
         mole_crops = self.getMoleCrops(image, keypoints, req_size)
         mole_imgs = self.getMoleImages(image, mole_crops, req_size)
         trial_num = 0
