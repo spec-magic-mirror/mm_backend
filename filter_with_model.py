@@ -1,6 +1,7 @@
 from sklearn.externals import joblib
-from sklearn.externals.joblib import numpy_pickle
+#from sklearn.externals.joblib import numpy_pickle
 from sklearn.ensemble import RandomForestClassifier
+from pprint import pprint
 import sys, os, cv2
 
 if len(sys.argv) != 2:
@@ -10,7 +11,7 @@ if len(sys.argv) != 2:
 TRIAL = sys.argv[1]
 TRIAL_DIR = "trials/" + TRIAL
 
-rf_clf = joblib.load("rf_clf.pkl")
+rf_clf = joblib.load("rf_clf_32b.pkl")
 results = {0: [], 1:[]}
 raw_paths = os.listdir(TRIAL_DIR)
 for path in raw_paths:
