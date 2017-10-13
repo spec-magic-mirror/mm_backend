@@ -5,6 +5,7 @@ import os
 
 class MoleDetector:
     version = "0.0.1"
+    trials_dir = "resources/trials/"
 
     def __init__(self, fname):
         self.fname = fname
@@ -51,9 +52,9 @@ class MoleDetector:
         mole_crops = self.getMoleCrops(image, keypoints, req_size)
         mole_imgs = self.getMoleImages(image, mole_crops, req_size)
         trial_num = 0
-        while os.path.exists("trials/" + str(trial_num)):
+        while os.path.exists(trials_dir + str(trial_num)):
             trial_num += 1
-        path = "trials/" + str(trial_num)
+        path = trials_dir + str(trial_num)
         os.makedirs(path)
 
         cv2.imwrite(path + "/full_face.jpg", im_with_moles)
