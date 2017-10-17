@@ -4,10 +4,10 @@ import sys
 import os
 
 class MoleDetector:
-    version = "0.0.1"
-    trials_dir = "resources/trials/"
+    version = "1.0.1"
 
     def __init__(self, fname):
+        self.trials_dir = "resources/trials/"
         self.fname = fname
         self.moles = []
         self.image_large = cv2.imread(self.fname)
@@ -48,13 +48,13 @@ class MoleDetector:
 
         #cv2.imshow("Blob", im_with_moles)
         #cv2.waitKey(0)
-        req_size = 75
+        req_size = 64
         mole_crops = self.getMoleCrops(image, keypoints, req_size)
         mole_imgs = self.getMoleImages(image, mole_crops, req_size)
         trial_num = 0
-        while os.path.exists(trials_dir + str(trial_num)):
+        while os.path.exists(self.trials_dir + str(trial_num)):
             trial_num += 1
-        path = trials_dir + str(trial_num)
+        path = self.trials_dir + str(trial_num)
         os.makedirs(path)
 
         cv2.imwrite(path + "/full_face.jpg", im_with_moles)
