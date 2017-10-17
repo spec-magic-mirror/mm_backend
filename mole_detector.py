@@ -91,9 +91,14 @@ class MoleDetector:
                 img = cv2.normalize(img, img, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, 
                     dtype=cv2.CV_32F)
             
-                test_imgs.append({'predicted': img, 'ground_truth': np.array([0, 0]).T, 
-                    'coords': [mole_img[1], mole_img[2]]})
-                            
+                if img.shape == (req_size, req_size):
+                    test_imgs.append({'predicted': img, 'ground_truth': np.array([0, 0]).T, 
+                        'coords': [mole_img[1], mole_img[2]]})
+                else:
+                    print("Excluding sample: Invalid Shape: %d x %d @ (%d, %d)" % (
+                        img.shape[0], img.shape[1], mole_img[1], mole_img[2]))
+            
+            # run the blob detections through the neural network
             filtered_moles = self.NN.filter_moles(self.NN_thresh, test_imgs)
             print(filtered_moles[0]) 
             mole_keypoints = [cv2.KeyPoint(float(fm[0][0]), float(fm[0][1]), 

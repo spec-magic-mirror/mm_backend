@@ -65,6 +65,7 @@ class MoleModel():
 
         self.vgg = VGG(nn_layers)
         self.vgg.load_state_dict(torch.load(pretrained_path))
+        self.vgg.eval()
     
     def filter_moles(self, thresh, test_data):
         dataloader = DataLoader(test_data, batch_size=1, shuffle=False, num_workers=2)
