@@ -2,9 +2,15 @@ import numpy as np
 import cv2
 import sys
 import os
+import torch
+import torch.nn as nn
+from torch.autograd import Variable
+from torch.utils.data import DataLoader
+import torch.nn.functional as F
+import vgg_nn
 
 class MoleDetector:
-    version = "1.0.1"
+    version = "2.0.0"
 
     def __init__(self, fname):
         self.trials_dir = "resources/trials/"
@@ -12,6 +18,14 @@ class MoleDetector:
         self.moles = []
         self.image_large = cv2.imread(self.fname)
         self.image_small = cv2.resize(self.image_large, (0, 0), fx=0.25, fy=0.25)
+        self.circle_size = 20
+
+        self.use_NN = True
+        self.NN_pretrained_path = "resources/models/mole_vgg.pth"
+        self.NN_thresh = 0.95
+        self.NN = None
+        if self.use_NN:
+            self.NN = vgg_nn.MoleModel(self.NN_pretrained_path)
 
     # explore active contour and major/minor axes for sizing
     def map_moles(self):
@@ -44,7 +58,8 @@ class MoleDetector:
         detector = cv2.SimpleBlobDetector(params)
         keypoints = detector.detect(image)
 
-        im_with_moles = cv2.drawKeypoints(image, keypoints, np.array([]), (255, 0, 0), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+        im_with_blobs = cv2.drawKeypoints(image, keypoints, np.array([]), (255, 0, 0), 
+                cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
 
         #cv2.imshow("Blob", im_with_moles)
         #cv2.waitKey(0)
@@ -57,7 +72,7 @@ class MoleDetector:
         path = self.trials_dir + str(trial_num)
         os.makedirs(path)
 
-        cv2.imwrite(path + "/full_face.jpg", im_with_moles)
+        cv2.imwrite(path + "/full_face_allblobs.jpg", im_with_blobs)
 
         mole_img_num = 0
         for mole_img in mole_imgs:
@@ -69,8 +84,31 @@ class MoleDetector:
             cv2.imwrite(filepath, img)
             mole_img_num += 1
 
-        mole_cannys = self.getMoleCannys(image, mole_crops)
-        mole_circles = self.getMoleCircles(image, mole_crops)
+        if self.use_NN:
+            test_imgs = []
+            for mole_img in mole_imgs:
+                img = cv2.cvtColor(mole_img[0], cv2.COLOR_BGR2GRAY)
+                img = cv2.normalize(img, img, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, 
+                    dtype=cv2.CV_32F)
+            
+                test_imgs.append({'predicted': img, 'ground_truth': np.array([0, 0]).T, 
+                    'coords': [mole_img[1], mole_img[2]]})
+                            
+            filtered_moles = self.NN.filter_moles(self.NN_thresh, test_imgs)
+            print(filtered_moles[0]) 
+            mole_keypoints = [cv2.KeyPoint(float(fm[0][0]), float(fm[0][1]), 
+                float(self.circle_size)) for fm in filtered_moles]
+
+            im_with_moles = cv2.drawKeypoints(image, mole_keypoints, np.array([]), (255, 0, 0), 
+                cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+        else:
+            im_with_moles = im_with_blobs
+
+        cv2.imwrite(path + "/full_face_moles.jpg", im_with_moles)
+        
+
+        #mole_cannys = self.getMoleCannys(image, mole_crops)
+        #mole_circles = self.getMoleCircles(image, mole_crops)
         # FOR ALGORITHM DEVELOPMENT ONLY
         '''
         for i in range(3):
