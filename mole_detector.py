@@ -2,12 +2,8 @@ import numpy as np
 import cv2
 import sys
 import os
-import torch
-import torch.nn as nn
-from torch.autograd import Variable
-from torch.utils.data import DataLoader
-import torch.nn.functional as F
 import vgg_nn
+from pprint import pprint
 
 class MoleDetector:
     version = "2.0.0"
@@ -22,7 +18,7 @@ class MoleDetector:
 
         self.use_NN = True
         self.NN_pretrained_path = "resources/models/mole_vgg.pth"
-        self.NN_thresh = 0.95
+        self.NN_thresh = 0.975
         self.NN = None
         if self.use_NN:
             self.NN = vgg_nn.MoleModel(self.NN_pretrained_path)
@@ -46,11 +42,11 @@ class MoleDetector:
 	'''
         params = cv2.SimpleBlobDetector_Params()
         #params.minThreshold = 50
-        params.minThreshold = 5
-        params.maxThreshold = 10000
+        params.minThreshold = 0
+        params.maxThreshold = 191
         params.filterByArea = True
-        params.minArea = 20
-        params.maxArea = 10000
+        params.minArea = 18
+        params.maxArea = 1000
         params.filterByConvexity = False
         params.filterByCircularity = False
         params.filterByInertia = False
@@ -86,6 +82,7 @@ class MoleDetector:
 
         if self.use_NN:
             test_imgs = []
+            print("Classifying with neural network...")
             for mole_img in mole_imgs:
                 img = cv2.cvtColor(mole_img[0], cv2.COLOR_BGR2GRAY)
                 img = cv2.normalize(img, img, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, 
@@ -96,16 +93,19 @@ class MoleDetector:
                         'coords': [mole_img[1], mole_img[2]]})
                 else:
                     print("Excluding sample: Invalid Shape: %d x %d @ (%d, %d)" % (
-                        img.shape[0], img.shape[1], mole_img[1], mole_img[2]))
-            
+                        img.shape[0], img.shape[1], mole_img[1], mole_img[2]))  
+
             # run the blob detections through the neural network
             filtered_moles = self.NN.filter_moles(self.NN_thresh, test_imgs)
-            print(filtered_moles[0]) 
+            print("")
+            pprint(filtered_moles) 
             mole_keypoints = [cv2.KeyPoint(float(fm[0][0]), float(fm[0][1]), 
                 float(self.circle_size)) for fm in filtered_moles]
 
             im_with_moles = cv2.drawKeypoints(image, mole_keypoints, np.array([]), (255, 0, 0), 
                 cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+            print("Done, sending results!")
+            
         else:
             im_with_moles = im_with_blobs
 

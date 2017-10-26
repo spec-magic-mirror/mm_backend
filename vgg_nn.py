@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
 import math
-import os
+import os, sys
 import cv2
 import json
 import numpy as np
@@ -70,6 +70,8 @@ class MoleModel():
     def filter_moles(self, thresh, test_data):
         dataloader = DataLoader(test_data, batch_size=1, shuffle=False, num_workers=2)
         results = []
+        total = len(test_data)
+        done = 0
         for i, data in enumerate(dataloader):
             # get the inputs
             inputs, labels, coords = data['predicted'], data['ground_truth'], data['coords']
@@ -83,6 +85,11 @@ class MoleModel():
 
             if test_outputs.data.numpy()[0][1] >= thresh:
                 results.append([test_data[i]['coords'], test_outputs.data.numpy()[0][1]])
+
+            # print progress
+            done += 1
+            sys.stdout.write("\r%d%%" % (done*100/total))
+            sys.stdout.flush()
         return results
 
 #for testing

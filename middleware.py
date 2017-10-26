@@ -52,7 +52,7 @@ def upload_image():
         filename = image_storage.filename
         #filename = type
         image = image_storage.read()
-        print filename
+        #print filename
         ### TODO: Store original image db
         with open(filename, 'w') as image_file:
             image_file.write(base64.b64decode(image))
