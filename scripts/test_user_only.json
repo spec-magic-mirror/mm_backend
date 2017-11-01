@@ -1,0 +1,12 @@
+{
+    "firstName" : "Mani",
+    "lastName" : "Moles",
+    "demographics" : {},
+    "moleHistory" : [],
+    "calibration" : {
+      "landmark_31": [100, 100],
+      "landmark_32": [150, 100],
+      "landmark_33": [300, 100],
+      "landmark_34": [350, 100]
+    }
+}

@@ -2,17 +2,15 @@ from flask import Flask, request, make_response
 import sys, base64
 from mole_detector import MoleDetector
 import json
-from pymongo import MongoClient
+from mole_db_api import MoleDB
 import os
 import datetime
+from Calibrate import Mole_Tracker
 from pprint import pprint
 
 middleware = Flask(__name__)
-try:
-    client = MongoClient('localhost', 27017)
-    db = client['MagicMirror']
-except Exception as e:
-    print("Problem with MongoDB: " + e.message)
+db = MoleDB()
+
 
 @middleware.route("/", methods=["GET", "POST"])
 def root():
@@ -28,11 +26,10 @@ def upload_image():
     print "Got a request to detect moles"
     #TODO: add support for multiple users
     user_firstname = "Mani"
-    try:
-        user_id = db.Users.find_one({"firstName": user_firstname})['_id']
-    except:
-        error["error"] = "Couldn't find user '" + user_firstname + "'"
-        print error["error"]
+    user_lastname = "Moles"
+    user_id, db_error = db.find_user_id(user_firstname, user_lastname)
+    if db_error:
+        error["error"] = db_error
         return json.dumps(error)
 
     timestamp = datetime.datetime.now()
@@ -48,12 +45,12 @@ def upload_image():
         print error["error"]
         return json.dumps(error)
 
-    for type, image_storage in all_images.iteritems():
+    for orientation, image_storage in all_images.iteritems():
         filename = image_storage.filename
         #filename = type
         image = image_storage.read()
         #print filename
-        ### TODO: Store original image db
+
         with open(filename, 'w') as image_file:
             image_file.write(base64.b64decode(image))
 
@@ -63,9 +60,9 @@ def upload_image():
         mole_b64 = base64.b64encode(moles_file)
 
         new_image = {"original": image, "moles": mole_b64}
-        images['images'][type] = new_image
+        images['images'][orientation] = new_image
 
-        orientation_moles = {"orientation": type, "moleData": []}
+        orientation_moles = {"orientation": orientation, "moleData": []}
 
         for keypoint in moles_keypoints:
             mole = {"location": {"x": 0, "y": 0}, "asymmetry": "", "size": 0, "shape": "", "color": [0, 0, 0],
@@ -77,10 +74,29 @@ def upload_image():
 
         all_moles["moles"].append(orientation_moles)
 
+        # First check to make sure a previous entry exists
+        mole_history = db.get_user_mole_history(user_id)
+        if mole_history:
+            # Get previous image and coordinates
+            # image, prev_image: image format
+            # coords, prev_coords: list([x,y])
+            # NOTE: Images are currently Base 64 encoded for transmission purposes
+            curr_image = base64.b64decode(image)
+            prev_image = base64.b64decode(db.get_prev_image(user_id, orientation, 'original'))
+            curr_coords = [[_mole["location"]["x"], _mole["location"]["y"]]
+                      for _mole in orientation_moles["moleData"]]
+            prev_coords = db.get_prev_coords(user_id, orientation)
+
+
+
+            # TODO: Implement mole comparison and tracking here
+
+
     # Add images and mole data to database
-    images_id = db.Images.insert(images)
+    images_id = db.insert_images(images)
     all_moles["images_id"] = images_id
-    db.Users.update_one({"_id":user_id}, {"$push":{"moleHistory":all_moles}})
+    db.update_user_mole_history(user_id, all_moles)
+
     result = images['images']
     for key in result.keys():
         result[key] = result[key]['moles']

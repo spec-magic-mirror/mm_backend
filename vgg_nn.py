@@ -64,7 +64,8 @@ class MoleModel():
         nn_layers = nn.Sequential(*layers)
 
         self.vgg = VGG(nn_layers)
-        self.vgg.load_state_dict(torch.load(pretrained_path))
+        self.vgg.load_state_dict(torch.load(pretrained_path,
+                map_location=lambda storage, loc: storage))
         self.vgg.eval()
     
     def filter_moles(self, thresh, test_data):

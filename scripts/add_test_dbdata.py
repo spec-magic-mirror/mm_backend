@@ -13,7 +13,7 @@ try:
 except Exception as e:
     print("Problem with MongoDB: " + e.message)
 
-with open("test_data.json", 'r') as test_file:
+with open("test_user_only.json", 'r') as test_file:
     test_json = json.load(test_file)
     if db.Users.find({"firstName":"Mani", "lastName":"Moles"}).count() == 0:
 	db.Users.insert(test_json)

@@ -16,8 +16,8 @@ class MoleDetector:
         self.image_small = cv2.resize(self.image_large, (0, 0), fx=0.25, fy=0.25)
         self.circle_size = 20
 
-        self.use_NN = True
-        self.NN_pretrained_path = "resources/models/mole_vgg.pth"
+        self.use_NN = False
+        self.NN_pretrained_path = "resources/models/mole_vgg_v3.pth"
         self.NN_thresh = 0.975
         self.NN = None
         if self.use_NN:
