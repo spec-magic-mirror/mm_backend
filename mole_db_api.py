@@ -58,11 +58,34 @@ class MoleDB:
     def get_prev_coords(self, user_id, orientation):
         mole_history = self.get_user_mole_history(user_id)
         prev_mole_sets = mole_history[-1]['moles']
+        prev_images_id = mole_history[-1]['images_id']
         prev_moles = []
         for mole_set in prev_mole_sets:
             if mole_set["orientation"] == orientation:
                 prev_moles = mole_set['moleData']
                 break
-        prev_coords = [[mole["location"]["x"], mole["location"]["y"]] for mole in prev_moles]
+        prev_coords = [[mole["location"]["x"], mole["location"]["y"], mole["mole_id"]] for mole in prev_moles]
+
         return prev_coords
 
+    def get_mole_list(self, user_id):
+        unique_moles = {}
+
+        temp = {}
+        history = self.get_user_mole_history(user_id)
+        for h in history:
+            date = h['date']
+            for moles in h['moles']:
+                orientation = moles['orientation']
+                if orientation not in unique_moles:
+                    unique_moles[orientation] = {}
+                for mole in moles["moleData"]:
+                    mole_id = mole['mole_id']
+                    mole_data = {"date": date, "color": mole['color'],
+                                 "shape": mole['shape'], "location": mole['location'],
+                                 "size": mole['size']}
+                    if mole_id in unique_moles[orientation]:
+                        unique_moles[orientation][mole_id].append(mole_data)
+                    else:
+                        unique_moles[orientation][mole_id] = [mole_data]
+        return unique_moles

@@ -5,6 +5,7 @@ from skimage import io
 from sets import Set
 import os
 import inspect
+from pprint import pprint
 
 class Mole_Tracker(object):
 	"""
@@ -61,14 +62,12 @@ class Mole_Tracker(object):
 			return shape
 
 	def get_distance(self, shape, moles):
-		
 		distances = {}
 		# Store and return four distance between mole and landmarks
 		for i in xrange(len(moles)):
 			dist_40 = np.sqrt((moles[i][0] - shape[40][0])**2 + (moles[i][1] - shape[40][1])**2)
 			dist_43 = np.sqrt((moles[i][0] - shape[43][0])**2 + (moles[i][1] - shape[43][1])**2)
-			distances[moles[i]] = [dist_40, dist_43]
-		print(distances)
+			distances[tuple(moles[i])] = [dist_40, dist_43]
 		return distances
 
 	def match(self, distances1, distances2, ratio):
@@ -76,13 +75,7 @@ class Mole_Tracker(object):
 		for mole1, dist1 in distances1.iteritems():
 			for mole2, dist2 in distances2.iteritems():
 				
-				print(mole1)
-				print(mole2)
-				
-				print(dist2)
 				dist1 = [dist1[0] * ratio, dist1[1] * ratio]
-				print(dist1)
-				# print(dist2)
 				if np.isclose(dist1, dist2, atol=10).all():
 					mole_pairs[mole1] = mole2
 					del(distances2[mole2])
@@ -92,6 +85,8 @@ class Mole_Tracker(object):
 	def track(self):
 		self.detector = dlib.get_frontal_face_detector()
 		self.predictor =  dlib.shape_predictor("./shape_predictor_68_face_landmarks.dat")
+                cv2.imwrite("tmp/gray1.jpg", self.gray1)
+                cv2.imwrite("tmp/gray2.jpg", self.gray2)
 		shape1 = self.get_landmarks(self.gray1)
 		shape2 = self.get_landmarks(self.gray2)
 		distances1 = self.get_distance(shape1, self.moles1)

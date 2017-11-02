@@ -1,6 +1,7 @@
 from flask import Flask, request, make_response
-import sys, base64
+import sys, base64, uuid
 from mole_detector import MoleDetector
+from bson import json_util
 import json
 from mole_db_api import MoleDB
 import os
@@ -19,6 +20,14 @@ def root():
 @middleware.route("/get_test", methods=["GET"])
 def get_test():
     return "Hello from the Mole Detector!\n"
+
+@middleware.route("/get_mole_data", methods=["GET"])
+def get_mole_data():
+    user_firstname = "Mani"
+    user_lastname = "Moles"
+    user_id, db_error = db.find_user_id(user_firstname, user_lastname)
+    mole_list = db.get_mole_list(user_id)
+    return json.dumps(mole_list, default=json_util.default)
 
 @middleware.route("/detect_moles", methods=["POST"])
 def upload_image():
@@ -55,47 +64,69 @@ def upload_image():
             image_file.write(base64.b64decode(image))
 
         md = MoleDetector(filename)
-        os.remove(filename)
-        moles_file, moles_keypoints = md.map_moles()
+        moles_file, moles_keypoints, mole_coords = md.map_moles()
         mole_b64 = base64.b64encode(moles_file)
 
         new_image = {"original": image, "moles": mole_b64}
         images['images'][orientation] = new_image
 
-        orientation_moles = {"orientation": orientation, "moleData": []}
-
-        for keypoint in moles_keypoints:
-            mole = {"location": {"x": 0, "y": 0}, "asymmetry": "", "size": 0, "shape": "", "color": [0, 0, 0],
-                    "misc": {}}
-            location = keypoint.pt
-            mole["location"]["x"] = location[0]
-            mole["location"]["y"] = location[1]
-            orientation_moles["moleData"].append(mole)
-
-        all_moles["moles"].append(orientation_moles)
-
         # First check to make sure a previous entry exists
         mole_history = db.get_user_mole_history(user_id)
+        prev_mole_ids = {}
+        mole_pairs = {}
         if mole_history:
             # Get previous image and coordinates
             # image, prev_image: image format
             # coords, prev_coords: list([x,y])
             # NOTE: Images are currently Base 64 encoded for transmission purposes
-            curr_image = base64.b64decode(image)
-            prev_image = base64.b64decode(db.get_prev_image(user_id, orientation, 'original'))
-            curr_coords = [[_mole["location"]["x"], _mole["location"]["y"]]
-                      for _mole in orientation_moles["moleData"]]
+            curr_image_fname = filename
+            prev_image = db.get_prev_image(user_id, orientation, 'original')
+            prev_image_fname = "tmp/prev_image.jpg"
+            with open(prev_image_fname, 'w') as image_file:
+                image_file.write(base64.b64decode(prev_image))
+
+            #curr_coords = [[_mole["location"]["x"], _mole["location"]["y"]]
+            #          for _mole in orientation_moles["moleData"]]
+            curr_coords = mole_coords
             prev_coords = db.get_prev_coords(user_id, orientation)
 
+            prev_mole_ids = {(coords[0], coords[1]): coords[2] for coords in prev_coords}
 
+            tracker = Mole_Tracker(curr_image_fname, prev_image_fname,
+                                   curr_coords, prev_coords)
+            mole_pairs = tracker.track()
+            pprint(mole_pairs)
+            os.remove(curr_image_fname)
+            os.remove(prev_image_fname)
 
-            # TODO: Implement mole comparison and tracking here
+        # Add images and mole data to database
+        images_id = db.insert_images(images)
+        all_moles["images_id"] = images_id
 
+        orientation_moles = {"orientation": orientation, "moleData": []}
 
-    # Add images and mole data to database
-    images_id = db.insert_images(images)
-    all_moles["images_id"] = images_id
+        for coord in mole_coords:
+            mole = {"location": {"x": 0, "y": 0}, "asymmetry": "", "size": 0, "shape": "", "color": [0, 0, 0],
+                    "misc": {}}
+            x = float(coord[0])
+            y = float(coord[1])
+            mole["location"]["x"] = x
+            mole["location"]["y"] = y
+
+            if prev_mole_ids and mole_pairs and (x,y) in mole_pairs:
+                mole['mole_id'] = prev_mole_ids[(x,y)]
+            else:
+                # TODO: look in previous images to find these
+                # for now we just assume they are new
+                mole['mole_id'] = str(uuid.uuid4())
+            orientation_moles["moleData"].append(mole)
+
+        all_moles["moles"].append(orientation_moles)
+
+    # TODO: ALSO STORE MOLE CROP IMAGES FOR DASHBOARD
     db.update_user_mole_history(user_id, all_moles)
+
+    #db.update_user_moles(user_id, _____)
 
     result = images['images']
     for key in result.keys():
