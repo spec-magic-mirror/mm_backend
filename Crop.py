@@ -30,8 +30,6 @@ class Cropper(object):
 		for rect in rects:
 			(x, y, w, h) = self.rect_to_bb(rect)
 			crop = self.image[y - 25: y + h + 25, x: x + w]
-			# cv2.imwrite(log_path + "crop.png", crop)
-			cv2.imwrite('crop.png', crop)
 			
 		return crop
 '''
