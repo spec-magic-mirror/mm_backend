@@ -7,6 +7,7 @@ from mole_db_api import MoleDB
 import os
 import datetime
 from Calibrate import Mole_Tracker
+from Crop import Cropper
 from pprint import pprint
 
 middleware = Flask(__name__)
@@ -58,13 +59,16 @@ def upload_image():
         filename = image_storage.filename
         #filename = type
         image = image_storage.read()
-        #print filename
+        #print filename 
 
+        cropper = Cropper(base64.b64decode(image))
+        cropped_img = cropper.crop()
+        image = base64.b64encode(cropped_img)
         with open(filename, 'w') as image_file:
             image_file.write(base64.b64decode(image))
 
         md = MoleDetector(filename)
-        moles_file, moles_keypoints, mole_coords = md.map_moles()
+        moles_file, moles_keypoints, mole_coords, mole_crop_paths = md.map_moles()
         mole_b64 = base64.b64encode(moles_file)
 
         new_image = {"original": image, "moles": mole_b64}
@@ -74,7 +78,7 @@ def upload_image():
         mole_history = db.get_user_mole_history(user_id)
         prev_mole_ids = {}
         mole_pairs = {}
-        if mole_history:
+        if mole_history and mole_coords:
             # Get previous image and coordinates
             # image, prev_image: image format
             # coords, prev_coords: list([x,y])
@@ -92,6 +96,10 @@ def upload_image():
 
             prev_mole_ids = {(coords[0], coords[1]): coords[2] for coords in prev_coords}
 
+            print curr_coords
+            print prev_coords
+            print curr_image_fname
+            print prev_image_fname
             tracker = Mole_Tracker(curr_image_fname, prev_image_fname,
                                    curr_coords, prev_coords)
             mole_pairs = tracker.track()
@@ -99,11 +107,8 @@ def upload_image():
             os.remove(curr_image_fname)
             os.remove(prev_image_fname)
 
-        # Add images and mole data to database
-        images_id = db.insert_images(images)
-        all_moles["images_id"] = images_id
-
         orientation_moles = {"orientation": orientation, "moleData": []}
+        images["images"][orientation]["mole_crops"] = {}
 
         for coord in mole_coords:
             mole = {"location": {"x": 0, "y": 0}, "asymmetry": "", "size": 0, "shape": "", "color": [0, 0, 0],
@@ -119,11 +124,19 @@ def upload_image():
                 # TODO: look in previous images to find these
                 # for now we just assume they are new
                 mole['mole_id'] = str(uuid.uuid4())
-            orientation_moles["moleData"].append(mole)
 
+            orientation_moles["moleData"].append(mole)
+            mole_crop_fname = mole_crop_paths[(int(x), int(y))]
+            with open(mole_crop_fname, 'r') as image_file:
+                mole_crop_img = base64.b64encode(image_file.read())
+                images["images"][orientation]["mole_crops"][mole["mole_id"]] = mole_crop_img
+                # Add images and mole data to database
+
+        images_id = db.insert_images(images)
+        all_moles["images_id"] = images_id
         all_moles["moles"].append(orientation_moles)
 
-    # TODO: ALSO STORE MOLE CROP IMAGES FOR DASHBOARD
+
     db.update_user_mole_history(user_id, all_moles)
 
     #db.update_user_moles(user_id, _____)

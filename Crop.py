@@ -1,11 +1,13 @@
 import cv2
 import dlib
+import numpy as np
 
 class Cropper(object):
 	"""docstring for Cropper"""
 	def __init__(self, image):
 		super(Cropper, self).__init__()
-		self.image = image
+                np_image = np.fromstring(image, dtype=np.uint8)
+		self.image = cv2.imdecode(np_image, 1)
 		self.detector = dlib.get_frontal_face_detector()
 		self.predictor =  dlib.shape_predictor("./shape_predictor_68_face_landmarks.dat")
 		
@@ -31,7 +33,7 @@ class Cropper(object):
 			(x, y, w, h) = self.rect_to_bb(rect)
 			crop = self.image[y - 25: y + h + 25, x: x + w]
 			
-		return crop
+		return cv2.imencode(".jpg", crop)[1]
 '''
 image = cv2.imread("./../MagicMirror/modules/MMM-Mole/log/test3.png")
 print("image read")

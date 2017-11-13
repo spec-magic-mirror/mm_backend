@@ -6,9 +6,14 @@ from subprocess import call
 from pprint import pprint
 from bson import json_util
 
-address = "http://localhost:5000"
+if len(sys.argv) < 2 or not sys.argv[1].endswith(".json"):
+    print("Proper usage: python get_mole_data.py <destination .json file>")
+    exit(0)
 
-if len(sys.argv) > 1:
+address = "http://localhost:5000"
+output_fname = sys.argv[1]
+
+if len(sys.argv) > 2:
     #address = sys.argv[3]
     address = "http://10.128.15.48:5000"
 
@@ -23,4 +28,7 @@ for orientation in json_data:
         if len(mole_data) > 1:
             result_moles[orientation][mole_id] = mole_data
 
-pprint(result_moles)
+with open(output_fname, 'w') as fp:
+    json.dump(result_moles, fp, default=json_util.default)
+#pprint(result_moles)
+
