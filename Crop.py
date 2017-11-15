@@ -31,7 +31,10 @@ class Cropper(object):
 		crop = None
 		for rect in rects:
 			(x, y, w, h) = self.rect_to_bb(rect)
-			crop = self.image[y - 25: y + h + 25, x: x + w]
+			crop = self.image[
+                                max(0, y - int(0.6*h)): min(len(self.image), y + int(1.10*h)), 
+                                x: x + w
+                                ]
 			
 		return cv2.imencode(".jpg", crop)[1]
 '''

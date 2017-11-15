@@ -27,14 +27,19 @@ class MoleDetector:
     def map_moles(self):
         image = self.image_large
 
-        # There are the specific parameters for te pure CV blob detector approach
+        # There are the specific parameters for the CV blob detector
+
+        # Increasing minThreshold decreases high-contrast detections
+        # Decreasing maxThreshold decreases low-contrast detections?
 
         params = cv2.SimpleBlobDetector_Params()
-        #params.minThreshold = 50
         params.minThreshold = 0
-        params.maxThreshold = 191
+        #params.minThreshold = 150
+        #params.maxThreshold = 191
+        params.maxThreshold = 175
         params.filterByArea = True
-        params.minArea = 18
+        #params.minArea = 18
+        params.minArea = 12
         params.maxArea = 1000
         params.filterByConvexity = False
         params.filterByCircularity = False
@@ -129,7 +134,7 @@ class MoleDetector:
         mole_crops = []
         for keypoint in mole_keypoints:
             x,y = keypoint.pt
-            crop_size = max([req_size, keypoint.size*3])
+            crop_size = max([req_size, keypoint.size*4])
 
             # TODO: find better way of handling out of bounds instead of just skipping them
             y_min = y-crop_size/2

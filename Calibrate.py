@@ -95,6 +95,8 @@ class Mole_Tracker(object):
 		land_mark_dist2 = np.sqrt((shape2[40][0] - shape2[43][0])**2 + (shape2[40][1] - shape2[43][1])**2)
 		ratio = land_mark_dist1 / land_mark_dist2
 		mole_pairs = self.match(distances1, distances2, ratio)
+                # Convert coords to ints
+                mole_pairs = {(int(k[0]), int(k[1])):(int(v[0]), int(v[1]), v[2]) for k, v in mole_pairs.iteritems()}
 		return mole_pairs
 
 ''' Example to use the code '''

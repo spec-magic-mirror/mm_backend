@@ -12,7 +12,7 @@ if len(sys.argv) > 3:
     #address = sys.argv[3]
     address = "http://10.128.15.48:5000"
 
-type = "front"
+type = "Front"
 
 with open(in_fname, 'rb') as in_file:
     response = requests.post(address + "/detect_moles",

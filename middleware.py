@@ -16,7 +16,7 @@ db = MoleDB()
 
 @middleware.route("/", methods=["GET", "POST"])
 def root():
-    return 0
+    return "Reflective Health Backend Online!"
 
 @middleware.route("/get_test", methods=["GET"])
 def get_test():
@@ -78,7 +78,15 @@ def upload_image():
         mole_history = db.get_user_mole_history(user_id)
         prev_mole_ids = {}
         mole_pairs = {}
-        if mole_history and mole_coords:
+    
+        # Make sure there are some valid moles in the previous image for comparison
+        previous_moles = False
+        if mole_history:
+            for mho in mole_history[-1]["moles"]:
+                if mho["moleData"]:
+                    previous_moles = True
+
+        if previous_moles and mole_coords:
             # Get previous image and coordinates
             # image, prev_image: image format
             # coords, prev_coords: list([x,y])
@@ -96,10 +104,10 @@ def upload_image():
 
             prev_mole_ids = {(coords[0], coords[1]): coords[2] for coords in prev_coords}
 
-            print curr_coords
-            print prev_coords
-            print curr_image_fname
-            print prev_image_fname
+            #print curr_coords
+            #print prev_coords
+            #print curr_image_fname
+            #print prev_image_fname
             tracker = Mole_Tracker(curr_image_fname, prev_image_fname,
                                    curr_coords, prev_coords)
             mole_pairs = tracker.track()
@@ -113,8 +121,8 @@ def upload_image():
         for coord in mole_coords:
             mole = {"location": {"x": 0, "y": 0}, "asymmetry": "", "size": 0, "shape": "", "color": [0, 0, 0],
                     "misc": {}}
-            x = float(coord[0])
-            y = float(coord[1])
+            x = int(coord[0])
+            y = int(coord[1])
             mole["location"]["x"] = x
             mole["location"]["y"] = y
 
