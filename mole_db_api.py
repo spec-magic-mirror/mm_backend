@@ -1,5 +1,6 @@
 from pymongo import MongoClient
 import dateutil.parser
+import cv2
 import base64
 from bson.objectid import ObjectId
 from pprint import pprint
@@ -68,22 +69,29 @@ class MoleDB:
 
         return prev_coords
 
+    def get_mole_crop_img(self, images_id, orientation, mole_id):
+        all_images = self.db.Images.find_one({"_id":images_id})["images"]
+        mole_crop_imgs = all_images[orientation]["mole_crops"]
+        mole_crop_img = mole_crop_imgs[mole_id]
+        return mole_crop_img
+
+
     def get_mole_list(self, user_id):
         unique_moles = {}
-
-        temp = {}
         history = self.get_user_mole_history(user_id)
         for h in history:
             date = h['date']
+            images_id = h['images_id']
             for moles in h['moles']:
                 orientation = moles['orientation']
                 if orientation not in unique_moles:
                     unique_moles[orientation] = {}
                 for mole in moles["moleData"]:
                     mole_id = mole['mole_id']
+                    mole_crop_img = self.get_mole_crop_img(images_id, orientation, mole_id)
                     mole_data = {"date": date, "color": mole['color'],
                                  "shape": mole['shape'], "location": mole['location'],
-                                 "size": mole['size']}
+                                 "size": mole['size'], "mole_img": mole_crop_img}
                     if mole_id in unique_moles[orientation]:
                         unique_moles[orientation][mole_id].append(mole_data)
                     else:

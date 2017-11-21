@@ -73,7 +73,9 @@ class Mole_Tracker(object):
 			distances[tuple(moles[i])] = [dist_40, dist_43, dist_34]
 		return distances
 
-	def match_by_dist(self, moles_a, moles_b):
+	def match_by_dist(self, moles_a, moles_b, ratio):
+		# for i in xrange(len(self.moles2)):
+		# 	self.moles2[i] = [self.moles2[i][0] * ratio, self.moles2[i][1] * ratio, self.moles2[2]]
 		if len(moles_a) >= len(moles_b):
 			matchings = [zip(x, moles_b) for x in itertools.permutations(moles_a, len(moles_b))]
 		else:
@@ -84,7 +86,7 @@ class Mole_Tracker(object):
 			total_dist = 0
 			for pair in matching:
 				# total_dist += euclidean_distance(pair[0], pair[1])
-				total_dist += np.sqrt((pair[0][0] - pair[1][0]) ** 2 + (pair[0][1] - pair[1][1]) ** 2)
+				total_dist += np.sqrt((pair[0][0] - pair[1][0] * ratio) ** 2 + (pair[0][1] - pair[1][1] * ratio) ** 2)
 			distances.append(total_dist)
 		min_dist_i = distances.index(min(distances))
 		return matchings[min_dist_i]
@@ -118,19 +120,20 @@ class Mole_Tracker(object):
 		# land_mark_dist2 = np.sqrt((shape2[34][0] - shape2[34][0])**2 + (shape2[34][1] - shape2[34][1])**2)
 		ratio = land_mark_dist1 / land_mark_dist2
 		# mole_pairs = self.match(distances1, distances2, ratio)
-		for i in xrange(len(self.moles2)):
-			self.moles2[i] = [self.moles2[i][0] * ratio, self.moles2[i][1] * ratio]
-		mole_pairs = self.match_by_dist(self.moles1, self.moles2)
+		mole_pairs = self.match_by_dist(self.moles1, self.moles2, ratio)
 		mole_dict = {}
 		for pair in mole_pairs:
 			mole_dict[pair[0]] = pair[1]
+
+		# Convert coords to ints
+		mole_dict = {(int(k[0]), int(k[1])):(int(v[0]), int(v[1]), v[2]) for k, v in mole_dict.iteritems()}
 		return mole_dict
 
 ''' Example to use the code '''
 
-# moles1 = [(608, 508), (652, 568), (806, 517)]
-# moles2 = [(565, 498), (605, 557), (756, 508)]
-# tracker = Mole_Tracker("./../log/test1.png", "./../log/test2.png", moles1, moles2)
+# moles1 = [(608, 508, 1), (652, 568, 2), (806, 517, 3)]
+# moles2 = [(565, 498, 1), (605, 557, 2), (756, 508, 3)]
+# tracker = Mole_Tracker("./../MagicMirror/modules/MMM-Mole/log/test1.png", "./../MagicMirror/modules/MMM-Mole/log/test1.png", moles1, moles2)
 
 # mole_pairs = tracker.track()
 
