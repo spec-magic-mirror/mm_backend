@@ -12,10 +12,10 @@ import itertools
 class Mole_Tracker(object):
 	"""
 	Args:
-		filename1 (str): first image's path 
-		filename2 (str): second image's path 
-		moles1 (array of (x,y) tuples): first image's moles coordinates 
-		moles2 (array of (x,y) tuples): second image's moles coordinates 
+		filename1 (str): first image's path
+		filename2 (str): second image's path
+		moles1 (array of (x,y) tuples): first image's moles coordinates
+		moles2 (array of (x,y) tuples): second image's moles coordinates
 	"""
 	def __init__(self, filename1, filename2, moles1, moles2):
 		super(Mole_Tracker, self).__init__()
@@ -34,19 +34,19 @@ class Mole_Tracker(object):
 		y = rect.top()
 		w = rect.right() - x
 		h = rect.bottom() - y
-	 
+
 		# return a tuple of (x, y, w, h)
 		return (x, y, w, h)
 
 	def shape_to_np(self, shape, dtype="int"):
 		# initialize the list of (x, y)-coordinates
 		coords = np.zeros((68, 2), dtype=dtype)
-	 
+
 		# loop over the 68 facial landmarks and convert them
 		# to a 2-tuple of (x, y)-coordinates
 		for i in range(0, 68):
 			coords[i] = (shape.part(i).x, shape.part(i).y)
-	 
+
 		# return the list of (x, y)-coordinates
 		return coords
 
@@ -89,7 +89,13 @@ class Mole_Tracker(object):
 				total_dist += np.sqrt((pair[0][0] - pair[1][0] * ratio) ** 2 + (pair[0][1] - pair[1][1] * ratio) ** 2)
 			distances.append(total_dist)
 		min_dist_i = distances.index(min(distances))
-		return matchings[min_dist_i]
+
+		best_matching = matchings[min_dist_i]
+
+		if len(moles_a) < len(moles_b):
+			best_matching = [[pairs[1], pairs[0]] for pairs in best_matching]
+
+		return best_matching
 
 	def match(self, distances1, distances2, ratio):
 		mole_pairs = {}
@@ -120,10 +126,19 @@ class Mole_Tracker(object):
 		# land_mark_dist2 = np.sqrt((shape2[34][0] - shape2[34][0])**2 + (shape2[34][1] - shape2[34][1])**2)
 		ratio = land_mark_dist1 / land_mark_dist2
 		# mole_pairs = self.match(distances1, distances2, ratio)
+
+		print("Moles 1")
+		pprint(self.moles1)
+		print("Moles 2")
+		pprint(self.moles2)
+
 		mole_pairs = self.match_by_dist(self.moles1, self.moles2, ratio)
 		mole_dict = {}
 		for pair in mole_pairs:
-			mole_dict[pair[0]] = pair[1]
+			mole_dict[tuple(pair[0])] = pair[1]
+
+		print("Mole Dict")
+		pprint(mole_dict)
 
 		# Convert coords to ints
 		mole_dict = {(int(k[0]), int(k[1])):(int(v[0]), int(v[1]), v[2]) for k, v in mole_dict.iteritems()}

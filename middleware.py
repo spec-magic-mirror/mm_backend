@@ -59,7 +59,7 @@ def upload_image():
         filename = image_storage.filename
         #filename = type
         image = image_storage.read()
-        #print filename 
+        #print filename
 
         cropper = Cropper(base64.b64decode(image))
         cropped_img = cropper.crop()
@@ -78,7 +78,7 @@ def upload_image():
         mole_history = db.get_user_mole_history(user_id)
         prev_mole_ids = {}
         mole_pairs = {}
-    
+
         # Make sure there are some valid moles in the previous image for comparison
         previous_moles = False
         if mole_history:
@@ -127,7 +127,7 @@ def upload_image():
             mole["location"]["y"] = y
 
             if prev_mole_ids and mole_pairs and (x,y) in mole_pairs:
-                mole['mole_id'] = prev_mole_ids[(x,y)]
+                mole['mole_id'] = mole_pairs[(x,y)][2]
             else:
                 # TODO: look in previous images to find these
                 # for now we just assume they are new

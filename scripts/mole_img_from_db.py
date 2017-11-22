@@ -14,7 +14,7 @@ if dest[-1] != '/':
 	dest += "/"
 
 userId = db.Users.find_one({"firstName":"Mani"}, {"_id":1})["_id"]
-crop_ids = db.Images.find()[124]["images"]["front"]["mole_crops"]
+crop_ids = db.Images.find()[0]["images"]["Front"]["mole_crops"]
 
 for crop_id in crop_ids:
 	id = crop_id

@@ -29,6 +29,4 @@ for orientation in json_data:
             result_moles[orientation][mole_id] = mole_data
 
 with open(output_fname, 'w') as fp:
-    json.dump(result_moles, fp, default=json_util.default)
-#pprint(result_moles)
-
+    json.dump(result_moles, fp, default=json_util.default, indent=4, separators=(',', ': '))
