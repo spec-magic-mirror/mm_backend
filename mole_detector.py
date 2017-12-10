@@ -17,8 +17,8 @@ class MoleDetector:
         self.circle_size = 20
 
         self.use_NN = True
-        self.NN_pretrained_path = "resources/models/mole_vgg.pth"
-        self.NN_thresh = 0.975
+        self.NN_pretrained_path = "resources/models/mole_vgg_v3.pth"
+        self.NN_thresh = 0.9999
         self.NN = None
         if self.use_NN:
             self.NN = vgg_nn.MoleModel(self.NN_pretrained_path)
@@ -27,25 +27,19 @@ class MoleDetector:
     def map_moles(self):
         image = self.image_large
 
-	# There are the specific parameters for te pure CV blob detector approach
-	'''
+        # There are the specific parameters for the CV blob detector
+
+        # Increasing minThreshold decreases high-contrast detections
+        # Decreasing maxThreshold decreases low-contrast detections?
+
         params = cv2.SimpleBlobDetector_Params()
-        params.minThreshold = 120
-        params.filterByArea = True
-        params.minArea = 45
-        params.filterByCircularity = False
-        #params.minCircularity = 0.75
-        params.filterByConvexity = True
-        params.minConvexity = .80
-        #params.filterByInertia = False
-        #params.minInertiaRatio = 0.20
-	'''
-        params = cv2.SimpleBlobDetector_Params()
-        #params.minThreshold = 50
         params.minThreshold = 0
-        params.maxThreshold = 191
+        #params.minThreshold = 150
+        #params.maxThreshold = 191
+        params.maxThreshold = 175
         params.filterByArea = True
-        params.minArea = 18
+        #params.minArea = 18
+        params.minArea = 12
         params.maxArea = 1000
         params.filterByConvexity = False
         params.filterByCircularity = False
@@ -66,9 +60,14 @@ class MoleDetector:
         while os.path.exists(self.trials_dir + str(trial_num)):
             trial_num += 1
         path = self.trials_dir + str(trial_num)
+        moles_path = path + "/moles"
+
         os.makedirs(path)
+        os.makedirs(moles_path)
 
         cv2.imwrite(path + "/full_face_allblobs.jpg", im_with_blobs)
+
+        mole_coords = []
 
         mole_img_num = 0
         for mole_img in mole_imgs:
@@ -102,46 +101,40 @@ class MoleDetector:
             mole_keypoints = [cv2.KeyPoint(float(fm[0][0]), float(fm[0][1]), 
                 float(self.circle_size)) for fm in filtered_moles]
 
+            mole_coords = [[float(fm[0][0]), float(fm[0][1])] for fm in filtered_moles]
+
+
             im_with_moles = cv2.drawKeypoints(image, mole_keypoints, np.array([]), (255, 0, 0), 
                 cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
             print("Done, sending results!")
             
         else:
+            mole_coords = [[mole_img[1], mole_img[2]] for mole_img in mole_imgs]
             im_with_moles = im_with_blobs
 
         cv2.imwrite(path + "/full_face_moles.jpg", im_with_moles)
-        
 
-        #mole_cannys = self.getMoleCannys(image, mole_crops)
-        #mole_circles = self.getMoleCircles(image, mole_crops)
-        # FOR ALGORITHM DEVELOPMENT ONLY
-        '''
-        for i in range(3):
-            cv2.imshow("Mole", mole_imgs[i])
-            circle_canvas = np.zeros((50,50,3), dtype=np.uint8)
-            for c in mole_circles[i]:
-                circle_center = (c[0], c[1])
-                circle_radius = int(c[2])
-                cv2.circle(circle_canvas, circle_center, circle_radius, (255,255,255),2)
-            #circle_canvas = cv2.cvtColor(circle_canvas, cv2.COLOR_BGR2GRAY)
-            #contours, hierarchy = cv2.findContours(circle_canvas, 1, 2)
-            #cv2.imshow("Circles", circle_canvas)
-            #cv2.imshow("Canny", mole_cannys[i])
-            #cv2.waitKey(0)
-        '''
-        #canny_edges = cv2.Canny(image, 150, 300, apertureSize=3)
-        #cv2.namedWindow("Canny", cv2.WINDOW_NORMAL)
-        #cv2.imshow("Canny", cv2.resize(canny_edges, (0,0), fx=0.3, fy=0.3))
-        #cv2.imshow("Canny", canny_edges)
-        #cv2.waitKey(0)
+        mole_crop_paths = {}
+        for coord in mole_coords:
+            x = coord[0]
+            y = coord[1]
+            for mole_img in mole_imgs:
+                if (x, y) == (mole_img[1], mole_img[2]):
+                    img = mole_img[0]
+                    x = mole_img[1]
+                    y = mole_img[2]
+                    filepath = moles_path + "/x" + str(x) + "_y" + str(y) + ".jpg"
+                    cv2.imwrite(filepath, img)
+                    mole_crop_paths[(x, y)] = filepath
 
-        return cv2.imencode('.jpg', im_with_moles)[1].tostring(), keypoints
+        return cv2.imencode('.jpg', im_with_moles)[1].tostring(), \
+               keypoints, mole_coords, mole_crop_paths
 
     def getMoleCrops(self, original_img, mole_keypoints, req_size):
         mole_crops = []
         for keypoint in mole_keypoints:
             x,y = keypoint.pt
-            crop_size = max([req_size, keypoint.size*3])
+            crop_size = max([req_size, keypoint.size*4])
 
             # TODO: find better way of handling out of bounds instead of just skipping them
             y_min = y-crop_size/2
